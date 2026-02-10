@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অধ্যায় ২: জীবের বৃদ্ধি ও বংশগতি</title>
+    <style>
+        :root { --primary: #3498db; --success: #27ae60; --danger: #e74c3c; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 15px; }
+        .quiz-container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; text-align: center; font-size: 20px; margin-bottom: 20px; }
+        .option { display: block; background: #f8f9fa; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; cursor: pointer; transition: 0.2s; font-size: 16px; }
+        .option:active { background: #eef2f7; border-color: var(--primary); }
+        .score-box { font-size: 24px; font-weight: bold; color: var(--primary); text-align: center; padding: 15px; background: #eef2f7; border-radius: 10px; margin: 15px 0; }
+        .btn-finish { background: var(--success); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; font-size: 16px; }
+        .progress-bar { height: 8px; background: #eee; border-radius: 4px; margin-bottom: 15px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.3s; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-screen">
+        <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
+        <h2 id="q-text">লোড হচ্ছে...</h2>
+        <div id="options-container"></div>
+    </div>
+
+    <div id="result-screen" style="display:none; text-align:center;">
+        <h2>কুইজ সম্পন্ন!</h2>
+        <div class="score-box" id="final-score"></div>
+        <p id="db-status" style="color: #666; font-size: 14px;"></p>
+        <button class="btn-finish" onclick="closeAndSave()">পয়েন্ট আপডেট করে অ্যাপে ফিরুন</button>
+    </div>
+</div>
+
+<script>
+    // আপনার ৩০টি প্রশ্ন এখানে সেট করা হয়েছে
+    const quizData = [
+        { q: "কোষ বিভাজন প্রধানত কয় প্রকার?", a: ["২ প্রকার", "৩ প্রকার", "৪ প্রকার", "৫ প্রকার"], c: 1 },
+        { q: "কোন বিভাজন প্রক্রিয়ায় নিউক্লিয়াস ডাম্বেল আকৃতি ধারণ করে?", a: ["মাইটোসিস", "মিয়োসিস", "অ্যামাইটোসিস", "সাইটোকাইনেসিস"], c: 2 },
+        { q: "মাইটোসিস কোষ বিভাজন কোথায় ঘটে?", a: ["জনন মাতৃকোষে", "দেহকোষে", "ব্যাকটেরিয়ায়", "পরাগরেণুতে"], c: 1 },
+        { q: "মাইটোসিসকে কোন ধরনের বিভাজন বলা হয়?", a: ["হ্রাসমূলক", "সমীকরণিক", "অ্যালোসোমিক", "ডাইরেক্ট"], c: 1 },
+        { q: "মিয়োসিস বিভাজন কোথায় ঘটে?", a: ["মূলের অগ্রভাগে", "ভ্রূণমূলে", "জনন মাতৃকোষে", "দেহকোষে"], c: 2 },
+        { q: "মিয়োসিসে একটি কোষ থেকে কয়টি নতুন কোষ তৈরি হয়?", a: ["২টি", "৪টি", "৮টি", "১টি"], c: 1 },
+        { q: "কোন বিভাজনকে 'হ্রাসমূলক বিভাজন' বলা হয়?", a: ["অ্যামাইটোসিস", "মাইটোসিস", "মিয়োসিস", "ইন্টারফেজ"], c: 2 },
+        { q: "মানুষের দেহকোষে ক্রোমোজোম সংখ্যা কতটি?", a: ["২৩টি", "৪৬টি", "২২টি", "৪৪টি"], c: 1 },
+        { q: "বংশগতির ভৌত ভিত্তি কোনটি?", a: ["প্লাস্টিড", "সাইটোপ্লাজম", "ক্রোমোজোম", "সেন্ট্রিওল"], c: 2 },
+        { q: "বংশগতিবিদ্যার জনক কে?", a: ["ডারউইন", "নিউটন", "গ্রেগর জোহান মেন্ডেল", "রবার্ট হুক"], c: 2 },
+        { q: "মাইটোসিসের কোন ধাপে ক্রোমোজোম বিষুবীয় অঞ্চলে আসে?", a: ["প্রোফেজ", "মেটাফেজ", "অ্যানাফেজ", "টেলোফেজ"], c: 1 },
+        { q: "নিউক্লিয়াসের বিভাজনকে কী বলা হয়?", a: ["সাইটোকাইনেসিস", "অ্যামাইটোসিস", "ক্যারাইওকাইনেসিস", "ইন্টারফেজ"], c: 2 },
+        { q: "DNA-এর পূর্ণরূপ কোনটি?", a: ["Digital Acid", "Deoxyribonucleic Acid", "Dinucleic Acid", "Direct Acid"], c: 1 },
+        { q: "ক্রোমোজোমের জিনের নির্দিষ্ট স্থানকে কী বলে?", a: ["সেন্ট্রোমিয়ার", "লোকাস", "ম্যাট্রিক্স", "স্যাটেলাইট"], c: 1 },
+        { q: "দৈহিক বৃদ্ধি ঘটে কোন বিভাজনের ফলে?", a: ["মাইটোসিস", "মিয়োসিস", "অ্যামাইটোসিস", "কোনোটিই নয়"], c: 0 },
+        { q: "ব্যাকটেরিয়ায় কোন ধরনের বিভাজন দেখা যায়?", a: ["মাইটোসিস", "মিয়োসিস", "অ্যামাইটোসিস", "ইন্টারফেজ"], c: 2 },
+        { q: "মানুষের লিঙ্গ নির্ধারণী ক্রোমোজোম কয়টি?", a: ["২২টি", "৪৬টি", "১ জোড়া", "২৩ জোড়া"], c: 2 },
+        { q: "মাইটোসিসের সবচেয়ে দীর্ঘস্থায়ী ধাপ কোনটি?", a: ["মেটাফেজ", "প্রোফেজ", "টেলোফেজ", "অ্যানাফেজ"], c: 1 },
+        { q: "সাইটোপ্লাজমের বিভাজনকে কী বলে?", a: ["ক্যারাইওকাইনেসিস", "সাইটোকাইনেসিস", "প্রোফেজ", "টেলোফেজ"], c: 1 },
+        { q: "ক্রোমোজোমের প্রধান রাসায়নিক উপাদান কোনটি?", a: ["RNA", "DNA", "চর্বি", "ভিটামিন"], c: 1 },
+        { q: "প্রাণিকোষে স্পিন্ডল যন্ত্র তৈরি করে কোনটি?", a: ["নিউক্লিওলাস", "ক্রোমোজোম", "সেন্ট্রিওল", "রাইবোজোম"], c: 2 },
+        { q: "উদ্ভিদ কোষে সাইটোকাইনেসিস কীভাবে ঘটে?", a: ["খাঁজ তৈরি", "কোষ প্লেট গঠন", "সরাসরি", "ঘটে না"], c: 1 },
+        { q: "অ্যানাফেজ ধাপে ক্রোমোজোম দেখতে কেমন হয়?", a: ["বৃত্তাকার", "V, L, J বা I আকৃতির", "সোজা লম্বা", "বর্গাকার"], c: 1 },
+        { q: "বংশগতির রাসায়নিক ভিত্তি কোনটি?", a: ["কোষ", "জিন", "প্রোটিন", "রক্ত"], c: 1 },
+        { q: "ক্রোমোজোম সবচেয়ে বেশি খাটো ও মোটা হয় কোন ধাপে?", a: ["প্রোফেজ", "মেটাফেজ", "অ্যানাফেজ", "টেলোফেজ"], c: 1 },
+        { q: "নিউক্লিওলাস সম্পূর্ণ বিলুপ্ত হয় কোন ধাপে?", a: ["প্রোফেজ", "মেটাফেজ", "অ্যানাফেজ", "টেলোফেজ"], c: 1 },
+        { q: "মিয়োসিসে নিউক্লিয়াস কয়বার বিভক্ত হয়?", a: ["১ বার", "২ বার", "৩ বার", "৪ বার"], c: 1 },
+        { q: "মেন্ডেল গবেষণায় কোন গাছ ব্যবহার করেছিলেন?", a: ["আম", "ধান", "মটরশুঁটি", "গোলাপ"], c: 2 },
+        { q: "পুরুষের ক্ষেত্রে সেক্স ক্রোমোজোম কোনটি?", a: ["XX", "XY", "YY", "XO"], c: 1 },
+        { q: "সন্তান কন্যা হওয়ার জন্য বাবার থেকে কোন ক্রোমোজোম আসে?", a: ["X", "Y", "XY", "XX"], c: 0 }
+    ];
+
+    let currentIdx = 0, score = 0;
+
+    function loadQuestion() {
+        const data = quizData[currentIdx];
+        document.getElementById("q-text").innerText = data.q;
+        document.getElementById("fill").style.width = ((currentIdx / quizData.length) * 100) + "%";
+        
+        let html = "";
+        data.a.forEach((opt, i) => {
+            html += `<div class="option" onclick="checkAns(${i})">${opt}</div>`;
+        });
+        document.getElementById("options-container").innerHTML = html;
+    }
+
+    function checkAns(i) {
+        if (i === quizData[currentIdx].c) score += 5; // প্রতি উত্তরে ৫ পয়েন্ট
+        
+        currentIdx++;
+        if (currentIdx < quizData.length) loadQuestion();
+        else finishQuiz();
+    }
+
+    function finishQuiz() {
+        document.getElementById("quiz-screen").style.display = "none";
+        document.getElementById("result-screen").style.display = "block";
+        document.getElementById("final-score").innerText = `আপনার পয়েন্ট: ${score}`;
+        
+        // Google Form-এ ডাটা পাঠানো (অপশনাল)
+        submitToGoogleForm(score);
+    }
+
+    function submitToGoogleForm(mark) {
+        const formURL = "https://docs.google.com/forms/d/e/1FAIpQLScmDqEtcQ0aJblo-yuHx1HJUU2ePVXI5fEkRdO5y5rWHXoleA/formResponse";
+        const formData = new FormData();
+        formData.append("entry.1940939055", mark); // আপনার মার্কস এন্ট্রি আইডি
+        
+        fetch(formURL, { method: "POST", mode: "no-cors", body: formData })
+        .then(() => { document.getElementById("db-status").innerText = "✓ স্কোর সার্ভারে সিঙ্ক হয়েছে।"; });
+    }
+
+    function closeAndSave() {
+        if (window.parent && window.parent.submitResult) {
+            window.parent.submitResult(score);
+        } else {
+            alert("আপনার অর্জন: " + score + " পয়েন্ট");
+            window.history.back();
+        }
+    }
+
+    window.onload = loadQuestion;
+</script>
+</body>
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>প্রাণীর শ্রেণিবিন্যাস কুইজ</title>
+    <style>
+        :root { --primary: #4a90e2; --success: #27ae60; --danger: #e74c3c; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
+        .quiz-container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { color: #2c3e50; text-align: center; font-size: 20px; }
+        .option { display: block; background: #f8f9fa; padding: 15px; margin: 10px 0; border: 2px solid #eee; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .option:active { background: #eef2f7; border-color: var(--primary); }
+        .score-box { font-size: 22px; font-weight: bold; color: var(--primary); text-align: center; padding: 15px; background: #eef2f7; border-radius: 10px; }
+        .btn-finish { background: var(--success); color: white; border: none; padding: 15px; border-radius: 10px; width: 100%; font-weight: bold; margin-top: 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-screen">
+        <h2 id="q-text">লোড হচ্ছে...</h2>
+        <div id="options-container"></div>
+        <p id="progress" style="text-align:center; color:#666;"></p>
+    </div>
+
+    <div id="result-screen" style="display:none; text-align:center;">
+        <h2>কুইজ শেষ!</h2>
+        <div class="score-box" id="final-score"></div>
+        <p id="status-msg"></p>
+        <button class="btn-finish" onclick="closeAndSave()">পয়েন্ট নিয়ে মূল অ্যাপে ফিরুন</button>
+    </div>
+</div>
+
+<script>
+    // এখানে আপনার ২০টি প্রশ্ন দেওয়া আছে
+    const quizData = [
+        { q: "শ্রেণিবিন্যাসের জনক কে?", a: ["ক্যারোলাস লিনিয়াস", "এরিস্টটল", "ডারউইন", "ল্যামার্ক"], c: 0 },
+        { q: "আধুনিক শ্রেণিবিন্যাসে সকল প্রাণী কোন জগতের অন্তর্ভুক্ত?", a: ["প্লান্টি", "মনেরা", "অ্যানিম্যালিয়া", "প্রটিস্টা"], c: 2 },
+        { q: "অ্যানিম্যালিয়া জগতকে কয়টি পর্বে ভাগ করা হয়েছে?", a: ["৭টি", "৮টি", "৯টি", "১০টি"], c: 2 },
+        { q: "পরিফেরা পর্বের প্রাণীরা সাধারণত কি নামে পরিচিত?", a: ["হাইড্রা", "স্পঞ্জ", "কোরাল", "কৃমি"], c: 1 },
+        { q: "কোন পর্বের প্রাণীর দেহপ্রাচীর অসংখ্য ছিদ্রযুক্ত?", a: ["নিডারিয়া", "অ্যানেলিডা", "পরিফেরা", "মলাস্কা"], c: 2 },
+        { q: "নিডারিয়া পর্বের প্রাণীর দেহ গহ্বরকে কি বলে?", a: ["হিমোসিল", "সিলেন্টরন", "সিলোম", "নেফ্রিডিয়া"], c: 1 },
+        { q: "শিকার ধরা ও আত্মরক্ষার জন্য নিডারিয়াদের কী থাকে?", a: ["সিটা", "নিডোব্লাস্ট", "চোষক", "আংটা"], c: 1 },
+        { q: "প্লাটিহেলমিনথেস পর্বের প্রাণীদের রেচন অঙ্গের নাম কী?", a: ["নেফ্রিডিয়া", "শিখা অঙ্গ", "ফুসফুস", "ত্বক"], c: 1 },
+        { q: "যকৃত কৃমি কোন পর্বের প্রাণী?", a: ["নেমাটোডা", "অ্যানেলিডা", "প্লাটিহেলমিনথেস", "মলাস্কা"], c: 2 },
+        { q: "গোল কৃমি কোন পর্বের অন্তর্ভুক্ত?", a: ["নেমাটোডা", "পরিফেরা", "আর্থোপোডা", "নিডারিয়া"], c: 0 },
+        { q: "কোন পর্বের প্রাণীদের দেহ নলাকার ও খণ্ডায়িত?", a: ["মলাস্কা", "অ্যানেলিডা", "কর্ডাটা", "একাইনডার্মাটা"], c: 1 },
+        { q: "কেঁচোর চলাচলে সাহায্য করে কোনটি?", a: ["পা", "সিটা", "পাখনা", "টিউব ফিট"], c: 1 },
+        { q: "প্রাণিজগতের সবচেয়ে বড় পর্ব কোনটি?", a: ["মলাস্কা", "আর্থোপোডা", "কর্ডাটা", "অ্যানেলিডা"], c: 1 },
+        { q: "আর্থোপোডা পর্বের প্রাণীদের রক্তপূর্ণ দেহ গহ্বরকে কি বলে?", a: ["সিলেন্টরন", "হিমোসিল", "সিলোম", "ভ্যাকুওল"], c: 1 },
+        { q: "শামুক ও ঝিনুক কোন পর্বের প্রাণী?", a: ["মলাস্কা", "একাইনডার্মাটা", "নিডারিয়া", "অ্যানেলিডা"], c: 0 },
+        { q: "কোন প্রাণীর দেহ 'ম্যান্টল' নামক পাতলা আবরণে ঢাকা থাকে?", a: ["চিংড়ি", "শামুক", "তারা মাছ", "কেঁচো"], c: 1 },
+        { q: "তারা মাছ কোন পর্বের প্রাণী?", a: ["মলাস্কা", "আর্থোপোডা", "একাইনডার্মাটা", "কর্ডাটা"], c: 2 },
+        { q: "কোন পর্বের প্রাণীদের পানি সংবহনতন্ত্র থাকে?", a: ["পরিফেরা", "একাইনডার্মাটা", "নিডারিয়া", "মলাস্কা"], c: 1 },
+        { q: "নিচের কোনটি অন্তঃপরজীবী?", a: ["জোক", "মশা", "ফিতা কৃমি", "মাছি"], c: 2 },
+        { q: "মলাস্কা পর্বের প্রাণীদের পা কেমন হয়?", a: ["সন্ধিযুক্ত", "পেশিবহুল", "কাঁটাযুক্ত", "থাকে না"], c: 1 }
+    ];
+
+    let currentIdx = 0, score = 0;
+
+    function loadQuestion() {
+        const data = quizData[currentIdx];
+        document.getElementById("q-text").innerText = data.q;
+        document.getElementById("progress").innerText = `প্রশ্ন: ${currentIdx + 1} / ${quizData.length}`;
+        
+        let html = "";
+        data.a.forEach((opt, i) => {
+            html += `<div class="option" onclick="checkAns(${i})">${opt}</div>`;
+        });
+        document.getElementById("options-container").innerHTML = html;
+    }
+
+    function checkAns(i) {
+        if (i === quizData[currentIdx].c) score += 5; // প্রতি সঠিক উত্তরে ৫ পয়েন্ট
+        else score -= 2; // ভুল উত্তরে ২ পয়েন্ট কাটা
+
+        currentIdx++;
+        if (currentIdx < quizData.length) loadQuestion();
+        else showResult();
+    }
+
+    function showResult() {
+        document.getElementById("quiz-screen").style.display = "none";
+        document.getElementById("result-screen").style.display = "block";
+        document.getElementById("final-score").innerText = `পয়েন্ট অর্জন: ${score}`;
+        document.getElementById("status-msg").innerText = score >= 80 ? "চমৎকার! পরের ধাপ আনলক হয়েছে।" : "আবার চেষ্টা করুন!";
+    }
+
+    function closeAndSave() {
+        // মূল অ্যাপের (index.html) ফাংশন কল করা
+        if (window.submitResult) {
+            window.submitResult(score);
+        } else {
+            // যদি সরাসরি ব্রাউজারে টেস্ট করেন
+            alert("আপনার পয়েন্ট: " + score);
+            location.reload();
+        }
+    }
+
+    window.onload = loadQuestion;
+</script>
+
+</body>
+</html>

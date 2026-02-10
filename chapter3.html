@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>অধ্যায় ৩: ব্যাপন, অভিস্রবণ ও প্রস্বেদন</title>
+    <style>
+        :root { --primary: #8e44ad; --success: #27ae60; --info: #3498db; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 15px; }
+        .quiz-container { max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        h2 { color: var(--primary); text-align: center; font-size: 22px; }
+        .progress-bar { height: 10px; background: #eee; border-radius: 5px; margin: 20px 0; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: 0.4s; }
+        .q-box { font-size: 18px; font-weight: bold; margin-bottom: 20px; color: #2c3e50; }
+        .option { display: block; background: #fff; padding: 15px; margin: 12px 0; border: 2px solid #e0e0e0; border-radius: 10px; cursor: pointer; transition: 0.2s; }
+        .option:active { transform: scale(0.98); background: #f8f0fc; border-color: var(--primary); }
+        .result-screen { display: none; text-align: center; }
+        .score-display { font-size: 40px; color: var(--success); font-weight: bold; margin: 20px 0; }
+        .btn-action { background: var(--primary); color: white; border: none; padding: 15px 30px; border-radius: 10px; width: 100%; font-size: 18px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <div id="quiz-ui">
+        <div class="progress-bar"><div id="fill" class="progress-fill"></div></div>
+        <div id="question" class="q-box">প্রশ্ন লোড হচ্ছে...</div>
+        <div id="options"></div>
+    </div>
+
+    <div id="result-ui" class="result-screen">
+        <h2>কুইজ সম্পন্ন!</h2>
+        <div class="score-display" id="score-text">০</div>
+        <p id="status-msg">ফলাফল প্রসেসিং হচ্ছে...</p>
+        <button class="btn-action" onclick="finishAndBack()">পয়েন্ট নিয়ে মূল মেনুতে ফিরুন</button>
+    </div>
+</div>
+
+<script>
+const questions = [
+    { q: "পদার্থের অণুগুলোর বেশি ঘনত্ব থেকে কম ঘনত্বের দিকে ছড়িয়ে পড়াকে কী বলে?", a: ["অভিস্রবণ", "ব্যাপন", "প্রস্বেদন", "ইমবাইবিশন"], c: 1 },
+    { q: "কোন পর্দার মধ্য দিয়ে শুধুমাত্র দ্রাবক অণু চলাচল করতে পারে?", a: ["ভেদ্য পর্দা", "অভেদ্য পর্দা", "অর্ধভেদ্য পর্দা", "পলিথিন"], c: 2 },
+    { q: "কিশমিশ পানিতে রাখলে ফুলে ওঠে কোন প্রক্রিয়ায়?", a: ["ব্যাপন", "অন্তঃঅভিস্রবণ", "বহিঃঅভিস্রবণ", "প্রস্বেদন"], c: 1 },
+    { q: "উদ্ভিদ মাটি থেকে পানি শোষণ করে কোন প্রক্রিয়ায়?", a: ["ব্যাপন", "অভিস্রবণ", "প্রস্বেদন", "শ্বসন"], c: 1 },
+    { q: "পত্ররন্ধ্রের মাধ্যমে পানি বাষ্পাকারে বের হওয়াকে কী বলে?", a: ["ব্যাপন", "অভিস্রবণ", "প্রস্বেদন", "আত্তীকরণ"], c: 2 },
+    { q: "প্রস্বেদনকে 'প্রয়োজনীয় ক্ষতি' বলেছেন কোন বিজ্ঞানী?", a: ["কার্টিস", "মেন্ডেল", "হেকেল", "ডারউইন"], c: 0 },
+    { q: "শুকনো কাঠের পানি শোষণের প্রক্রিয়াকে কী বলে?", a: ["ব্যাপন", "ইমবাইবিশন", "অভিস্রবণ", "শোষণ"], c: 1 },
+    { q: "উদ্ভিদের রস উত্তোলন (Ascent of sap) কার মাধ্যমে ঘটে?", a: ["জাইলেম", "ফ্লোয়েম", "মজ্জা", "ত্বক"], c: 0 },
+    { q: "পাতায় তৈরি খাদ্য উদ্ভিদের সারা দেহে ছড়িয়ে দেয় কোনটি?", a: ["জাইলেম", "ফ্লোয়েম", "মূলরোম", "পত্ররন্ধ্র"], c: 1 },
+    { q: "মাছের পটকা কোন ধরনের পর্দা?", a: ["ভেদ্য", "অভেদ্য", "অর্ধভেদ্য", "স্বচ্ছ"], c: 2 },
+    { q: "কোষ প্রাচীর কোন ধরনের পর্দা?", a: ["অভেদ্য", "ভেদ্য", "অর্ধভেদ্য", "সজীব"], c: 1 },
+    { q: "বায়ুমণ্ডলে আর্দ্রতা বেশি থাকলে প্রস্বেদনের হার কেমন হয়?", a: ["বাড়ে", "কমে", "বন্ধ হয়", "একই থাকে"], c: 1 },
+    { q: "কাণ্ডের ত্বকে থাকা ছোট ছিদ্রকে কী বলে?", a: ["পত্ররন্ধ্র", "লেন্টিসেল", "মজ্জা", "মূলরোম"], c: 1 },
+    { q: "বংশগতির ভৌত ভিত্তি কোনটি?", a: ["প্লাস্টিড", "সাইটোপ্লাজম", "ক্রোমোজোম", "সেন্ট্রিওল"], c: 2 },
+    { q: "প্লাজমা মেমব্রেন কোন ধরনের পর্দা?", a: ["ভেদ্য", "অভেদ্য", "অর্ধভেদ্য", "নির্জীব"], c: 2 }
+    // আপনার বাকি প্রশ্নগুলো একইভাবে এখানে যোগ করতে পারবেন
+];
+
+let idx = 0, score = 0;
+
+function displayQuestion() {
+    const current = questions[idx];
+    document.getElementById("question").innerText = `${idx + 1}. ${current.q}`;
+    document.getElementById("fill").style.width = ((idx / questions.length) * 100) + "%";
+    
+    let btnHtml = "";
+    current.a.forEach((opt, i) => {
+        btnHtml += `<div class="option" onclick="next(${i})">${opt}</div>`;
+    });
+    document.getElementById("options").innerHTML = btnHtml;
+}
+
+function next(answer) {
+    if (answer === questions[idx].c) score += 5; // প্রতি প্রশ্নে ১০ পয়েন্ট
+    
+    idx++;
+    if (idx < questions.length) {
+        displayQuestion();
+    } else {
+        showResults();
+    }
+}
+
+
+
+function showResults() {
+    document.getElementById("quiz-ui").style.display = "none";
+    document.getElementById("result-ui").style.display = "block";
+    document.getElementById("score-text").innerText = score;
+    
+    // Google Form-এ ডাটা পাঠানো (ব্যাকগ্রাউন্ডে)
+    sendToSheet(score);
+}
+
+function sendToSheet(points) {
+    const formURL = "https://docs.google.com/forms/d/e/1FAIpQLScmDqEtcQ0aJblo-yuHx1HJUU2ePVXI5fEkRdO5y5rWHXoleA/formResponse";
+    const body = new FormData();
+    body.append("entry.1940939055", points); 
+    
+    fetch(formURL, { method: "POST", mode: "no-cors", body })
+    .then(() => { document.getElementById("status-msg").innerText = "✓ স্কোর সার্ভারে সংরক্ষিত হয়েছে।"; });
+}
+
+function finishAndBack() {
+    if (window.parent && window.parent.updateAppPoints) {
+        window.parent.updateAppPoints(score);
+    } else {
+        window.history.back();
+    }
+}
+
+window.onload = displayQuestion;
+</script>
+</body>
+</html>
