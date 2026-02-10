@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>৮ম শ্রেণির বিজ্ঞান কুইজ</title>
+    <style>
+        :root { --p: #6200ee; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        
+        .header { 
+            background: linear-gradient(135deg, #6200ee, #9c27b0); 
+            color: white; padding: 20px; border-radius: 15px; 
+            text-align: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        /* চ্যাপ্টার গ্রিড */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        
+        .btn {
+            padding: 25px 10px; border: none; border-radius: 12px;
+            color: white; font-weight: bold; font-size: 16px;
+            cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* আলাদা আলাদা কালার */
+        .c1 { background: #FF5722; } .c2 { background: #4CAF50; }
+        .c3 { background: #2196F3; } .c4 { background: #E91E63; }
+        .c5 { background: #9C27B0; } .c6 { background: #FF9800; }
+        .c7 { background: #00BCD4; } .c8 { background: #795548; }
+
+        .locked { background: #bdc3c7 !important; cursor: not-allowed; }
+
+        /* সাব-কুইজ এরিয়া */
+        #quiz-selection { display: none; text-align: center; }
+        .back-btn { background: #34495e; color: white; padding: 10px; margin-bottom: 20px; border-radius: 5px; cursor: pointer; border: none; }
+    </style>
+</head>
+<body>
+
+<div id="main-screen">
+    <div class="header">
+        <h2>৮ম শ্রেণি বিজ্ঞান</h2>
+        <div id="total-score" style="font-weight: bold; font-size: 1.2rem;">মোট স্কোর: 0</div>
+    </div>
+    
+    <div class="grid" id="chapter-list">
+        </div>
+</div>
+
+<div id="quiz-selection">
+    <button class="back-btn" onclick="showMain()">← ফিরে যাও</button>
+    <h3 id="selected-ch-name">অধ্যায়</h3>
+    <div class="grid" id="sub-quiz-list" style="grid-template-columns: 1fr;">
+        </div>
+</div>
+
+<script>
+    // আপনার গিটহাব লিঙ্ক এখানে দিন
+    const BASE_URL = "https://rokonripon.github.io/myquiz/"; 
+
+    let db = JSON.parse(localStorage.getItem('sci_quiz_v2')) || { score: 0, unlocked: [1] };
+
+    function renderChapters() {
+        const list = document.getElementById('chapter-list');
+        list.innerHTML = "";
+        document.getElementById('total-score').innerText = `মোট স্কোর: ${db.score}`;
+
+        for (let i = 1; i <= 14; i++) {
+            const isUnlocked = db.score >= (i - 1) * 100;
+            const btn = document.createElement('button');
+            btn.className = `btn c${(i % 8) + 1} ${isUnlocked ? '' : 'locked'}`;
+            btn.innerHTML = `অধ্যায় ${i} ${isUnlocked ? '' : '🔒'}`;
+            if (isUnlocked) btn.onclick = () => showQuizzes(i);
+            list.appendChild(btn);
+        }
+    }
+
+    function showQuizzes(chNum) {
+        document.getElementById('main-screen').style.display = 'none';
+        document.getElementById('quiz-selection').style.display = 'block';
+        document.getElementById('selected-ch-name').innerText = `অধ্যায় ${chNum}-এর কুইজসমূহ`;
+        
+        const subList = document.getElementById('sub-quiz-list');
+        subList.innerHTML = "";
+
+        for (let q = 1; q <= 5; q++) {
+            const btn = document.createElement('button');
+            btn.className = `btn c${q}`;
+            btn.style.margin = "5px 0";
+            btn.innerText = `কুইজ ${q}`;
+            btn.onclick = () => startQuiz(`ch${chNum}_q${q}.html`, chNum);
+            subList.appendChild(btn);
+        }
+    }
+
+    function showMain() {
+        document.getElementById('main-screen').style.display = 'block';
+        document.getElementById('quiz-selection').style.display = 'none';
+    }
+
+    async function startQuiz(fileName, chNum) {
+        // অফলাইন চেক ও ডাউনলোড
+        let content = localStorage.getItem('cache_' + fileName);
+        
+        if (!content && navigator.onLine) {
+            try {
+                const res = await fetch(BASE_URL + fileName);
+                content = await res.text();
+                localStorage.setItem('cache_' + fileName, content);
+            } catch (e) { alert("ডাউনলোড ব্যর্থ!"); return; }
+        }
+
+        if (content) {
+            document.body.innerHTML = content;
+            window.submitResult = function(point) {
+                db.score += point;
+                if (db.score < 0) db.score = 0;
+                localStorage.setItem('sci_quiz_v2', JSON.stringify(db));
+                location.reload(); 
+            };
+        } else {
+            alert("ইন্টারনেট প্রয়োজন!");
+        }
+    }
+
+    window.onload = renderChapters;
+</script>
+
+</body>
+</html>
